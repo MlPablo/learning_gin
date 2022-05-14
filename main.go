@@ -6,10 +6,10 @@ import (
 )
 
 type album struct {
-	ID     string  `json:"id"`
-	Title  string  `json:"title"`
-	Artist string  `json:"artist"`
-	Price  float64 `json:"price"`
+	ID     string  `json:"id" binding:"required"`
+	Title  string  `json:"title" binding:"required"`
+	Artist string  `json:"artist" binding:"required"`
+	Price  float64 `json:"price" binding:"required"`
 }
 
 type error struct {
@@ -79,13 +79,17 @@ func getAlbums(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, albums)
 }
 
-func main() {
+func GetRouter() *gin.Engine {
 	router := gin.Default()
 	router.GET("/albums", getAlbums)
 	router.GET("/albums/:id", getAlbumById)
 	router.PUT("/albums/:id", updateAlbumById)
 	router.DELETE("/albums/:id", deleteAlbumByID)
 	router.POST("/albums", postAlbum)
+	return router
+}
 
+func main() {
+	router := GetRouter()
 	router.Run(":8080")
 }
