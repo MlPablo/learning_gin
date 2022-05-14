@@ -1,0 +1,27 @@
+# curl http://localhost:8080/albums
+#--include
+#--header "Content-Type: application/json"
+#--request "POST"
+#--data '{"id": "4","title": "The Moder Sound","artist": "Molodets","price": 29.9}'
+POST http://localhost:8080/albums
+Content-Type: application/json
+
+{"id": "4","title": "The Moder Sound","artist": "Molodets","price": 29.9}
+
+###
+
+GET http://localhost:8080/albums
+
+###
+
+GET http://localhost:8080/albums/5
+
+###
+
+DELETE http://localhost:8080/albums/1
+
+###
+PUT http://localhost:8080/albums/1
+Content-Type: application/json
+
+{"title": "Tested"}
