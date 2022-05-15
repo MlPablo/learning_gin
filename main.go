@@ -5,6 +5,8 @@ import (
 	"net/http"
 )
 
+var Stor Storage = NewStorage()
+
 type album struct {
 	ID     string  `json:"id" binding:"required"`
 	Title  string  `json:"title" binding:"required"`
@@ -12,7 +14,7 @@ type album struct {
 	Price  float64 `json:"price" binding:"required"`
 }
 
-type error struct {
+type HttpError struct {
 	Error string `json:"error"`
 }
 
@@ -24,58 +26,57 @@ var albums = []album{
 
 func postAlbum(c *gin.Context) {
 	var NewAlbum album
-
 	if err := c.BindJSON(&NewAlbum); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, error{"bad_request"})
+		c.IndentedJSON(http.StatusBadRequest, HttpError{"bad_request"})
 		return
 	}
-
-	albums = append(albums, NewAlbum)
-	c.IndentedJSON(http.StatusCreated, NewAlbum)
+	alb, err := Stor.Add(NewAlbum)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, HttpError{"Bad Form"})
+	}
+	c.IndentedJSON(http.StatusCreated, alb)
 
 }
 
 func getAlbumById(c *gin.Context) {
 	id := c.Param("id")
-
-	for _, a := range albums {
-		if a.ID == id {
-			c.IndentedJSON(http.StatusOK, a)
-			return
-		}
+	album, err := Stor.OneRecord(id)
+	if err != nil {
+		c.IndentedJSON(http.StatusNotFound, HttpError{"not found"})
+		return
 	}
-	c.IndentedJSON(http.StatusNotFound, error{"not found"})
+	c.IndentedJSON(http.StatusOK, album)
 }
 
 func deleteAlbumByID(c *gin.Context) {
 	id := c.Param("id")
-
-	for i, a := range albums {
-		if a.ID == id {
-			albums = append(albums[:i], albums[i+1:]...)
-			c.IndentedJSON(http.StatusNoContent, a)
-			return
-		}
+	err := Stor.Delete(id)
+	if err != nil {
+		c.IndentedJSON(http.StatusNotFound, HttpError{"not found"})
+		return
 	}
-	c.IndentedJSON(http.StatusNotFound, error{"not found"})
+	c.IndentedJSON(http.StatusNoContent, HttpError{"deleted"})
 }
 
 func updateAlbumById(c *gin.Context) {
 	id := c.Param("id")
 
-	for i, a := range albums {
-		if a.ID == id {
-			c.BindJSON(&a)
-			albums[i] = a
-			c.IndentedJSON(http.StatusOK, a)
-			return
-		}
+	alb, err := Stor.OneRecord(id)
+	if err != nil {
+		c.IndentedJSON(http.StatusNotFound, HttpError{"not found"})
+		return
 	}
-	c.IndentedJSON(http.StatusNotFound, error{"not found"})
-
+	c.BindJSON(&alb)
+	Stor.Update(id, alb)
+	c.IndentedJSON(http.StatusOK, alb)
 }
 
 func getAlbums(c *gin.Context) {
+	albums, err := Stor.Read()
+	if err != nil {
+		c.IndentedJSON(http.StatusNotFound, HttpError{"Not Found"})
+		return
+	}
 	c.IndentedJSON(http.StatusOK, albums)
 }
 
